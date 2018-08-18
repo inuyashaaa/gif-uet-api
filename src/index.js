@@ -29,7 +29,7 @@ router.post('/login', koaBody(), (ctx, next) => {
 router.post('/send-message', koaBody(), (ctx, next) => {
   const { userSendId, userRecievedId, imageName } = ctx.request.body
 
-  login({appState: JSON.parse(fs.readFileSync(`${userSendId}.json`, 'utf8'))}, (err, api) => {
+  login({appState: JSON.parse(fs.readFileSync(path.resolve(__dirname, `../states/${userSendId}.json`), 'utf8'))}, (err, api) => {
     if(err) return console.error(err)
     const message = {
       attachment: fs.createReadStream(path.resolve(__dirname, `../public/images/${imageName}`))
@@ -60,13 +60,11 @@ router.get('/import-image', async (ctx, next) => {
         dest: path.resolve(__dirname, '../public/images')
       })
     })
-    console.log(a.length);
-    console.log('ada', a[0]);
     
     Promise.all(a).then(data => {
       ctx.body = data
     })
-
+    return ctx.body
   } catch (error) {
     ctx.throw(400, error)
   }
