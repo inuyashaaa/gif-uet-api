@@ -73,3 +73,5 @@ src/public/cms/media/
 
 # file timesheet
 src/data/upload
+states/
+public/images/
