@@ -1,0 +1,21 @@
+{
+  "name": "facebook",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "start": "pm2 start index.js -i 0 --name 'gifur'",
+    "stop": "pm2 stop gifur",
+    "restart": "pm2 restart gifur",
+    "delete": "pm2 delete gifur",
+    "start:dev": "pm2-dev index.js",
+    "serve:dev": "yarn start:dev"
+  },
+  "dependencies": {
+    "facebook-chat-api": "1.6.0",
+    "koa": "2.5.2",
+    "koa-router": "7.4.0",
+    "messaging-api-messenger": "0.7.5",
+    "pm2": "^3.0.3"
+  }
+}
