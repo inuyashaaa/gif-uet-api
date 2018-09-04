@@ -15,6 +15,9 @@ const login = require("facebook-chat-api")
 const koaBody = require('koa-body')
 const axios = require('axios')
 const download = require('image-downloader')
+const {promisify} = require('util');
+
+const loginPromise = promisify(login)
 
 const app = new Koa()
 const router = new Router()
@@ -25,28 +28,18 @@ router.get('/', (ctx, next) => {
 
 let clientApi = [];
 
-router.post('/login', koaBody(), (ctx, next) => {
+router.post('/login', koaBody(), async (ctx, next) => {
   const { email, password } = ctx.request.body
-  login({email, password},{forceLogin: true}, (err, api) => {
-    if(err) {
-      switch (err.error) {
-        case 'login-approval':
-          console.log('Enter code > ');
-          rl.on('line', (line) => {
-            err.continue('');
-            rl.close();
-          });
-          break;
-        default:
-          console.error(err);
-      }
-      return;
-    }
+  try {
+    const api = await loginPromise({email, password})
     const userId = api.getCurrentUserID()
-    fs.writeFileSync(`states/${userId}.json`, JSON.stringify(api.getAppState()));
-    clientApi[userId] = api;
-  });
-  ctx.body = 'Login success'
+    fs.writeFileSync(`states/${userId}.json`, JSON.stringify(api.getAppState()))
+    clientApi[userId] = api
+    ctx.body = 'Login success <3'
+    return
+  } catch (error) {
+    ctx.throw(400, error.error)
+  }
 })
 
 router.post('/send-message', koaBody(), (ctx, next) => {
