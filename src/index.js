@@ -23,6 +23,8 @@ router.get('/', (ctx, next) => {
   ctx.body = "Welcome to Gifur <3"
 })
 
+let clientApi = [];
+
 router.post('/login', koaBody(), (ctx, next) => {
   const { email, password } = ctx.request.body
   login({email, password},{forceLogin: true}, (err, api) => {
@@ -42,8 +44,9 @@ router.post('/login', koaBody(), (ctx, next) => {
     }
     const userId = api.getCurrentUserID()
     fs.writeFileSync(`states/${userId}.json`, JSON.stringify(api.getAppState()));
+    clientApi[userId] = api;
   });
-  ctx.body = 'Login'
+  ctx.body = 'Login success'
 })
 
 router.post('/send-message', koaBody(), (ctx, next) => {
@@ -53,18 +56,27 @@ router.post('/send-message', koaBody(), (ctx, next) => {
     return
   }
   const nothingToSay = secret
-  console.log('nothingToSay', nothingToSay);
   
   const dataFromClient = JSON.parse(CryptoJS.AES.decrypt(key, nothingToSay).toString(CryptoJS.enc.Utf8))
   const {userSendId, userRecievedId, imageName} = dataFromClient
-  login({appState: JSON.parse(fs.readFileSync(path.resolve(__dirname, `../states/${userSendId}.json`), 'utf8'))}, (err, api) => {
-    if(err) return console.error(err)
+  if (clientApi && clientApi[userSendId]) {
     const message = {
       attachment: fs.createReadStream(path.resolve(__dirname, `../public/images/${imageName}`))
     }
-    api.sendMessage(message, userRecievedId)
-  })
-  ctx.body = 'Message'
+    clientApi[userSendId].sendMessage(message, userRecievedId)
+  } else {
+    login({appState: JSON.parse(fs.readFileSync(path.resolve(__dirname, `../states/${userSendId}.json`), 'utf8'))}, (err, api) => {
+      if(err) return console.error(err)
+      const message = {
+        attachment: fs.createReadStream(path.resolve(__dirname, `../public/images/${imageName}`))
+      }
+      api.sendMessage(message, userRecievedId)
+      clientApi[userSendId] = api;
+      
+    })
+  }
+  ctx.body = "Send message success"
+  return
 })
 
 router.get('/import-image', async (ctx, next) => {
